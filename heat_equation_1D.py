@@ -2,6 +2,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
+
 # Interfaces between layers are treated as perfect interfaces
 # (no contact resistance), where continuity between temperature
 # and heat flux are enforced. 
@@ -12,6 +13,8 @@ from matplotlib import pyplot as plt
 # where alphaL == thermal diffusivity of lower material and
 # alphaR == thermal diffusivity of upper material across interface
 
+# As this is an explicit method (Forward Euler) the time step
+# is quite small so this can take a long time to run. Sorry!
 
 # INPUT:
 #	number of layers
@@ -25,6 +28,7 @@ def setProperties(nLayers,*args) :
 	# Alpha in args[nLayers,2*nLayers-1]
 	# dx in args[2*nLayers]
 	xspan = 0.0
+	dx = args[2*nLayers]
 	ib = np.zeros(nLayers,dtype=int)
 	alp = np.zeros(nLayers)
 	dxa = np.zeros(nLayers)
@@ -119,7 +123,7 @@ def solve_1D_heat_equation(nLayers,x,ib,alp,dt,dxa,tspan,*args) :
 				u[ii] = u0[ii] + c1*(u0[ii-1]-2.0*u0[ii]+u0[ii+1])
 			ie = ib[m]
 
-		# Handle interface between layers
+		# Handle interface 
 		for m in range(nLayers-1) :
 			ind = ib[m]
 			c1 = 1.0/(1.0+(dxa[m]*alp[m+1]/(dxa[m+1]*alp[m])))
@@ -132,16 +136,6 @@ def solve_1D_heat_equation(nLayers,x,ib,alp,dt,dxa,tspan,*args) :
 	# saved total. Do not recommend saving every time step...
 	return u
 
-nLayers = 3
-t1  = 3.0
-t2  = 2.0
-t3  = 3.0
-a1  = 52.2
-a2  = 3.3
-a3  = 25.3
-dx = 0.1
-tspan = 50.25
-
 # Solve "cube" with one layer (one material)
 # With Dirichlet boundary conditions
 # T = 5 @ x = 0 & T = 10 & x = t1 = 10.0
@@ -150,7 +144,7 @@ def solve_single_layer_cube() :
 	t1 = 10.0
 	a1 = 14.2
 	dx = 0.05
-	tspan = 10.0
+	tspan = 5.0
 	[x,ib,alp,dt,dxa] = setProperties(nLayers,t1,a1,dx)
 	u = solve_1D_heat_equation(nLayers,x,ib,alp,dt,dxa,tspan,0,0,5,10)
 	return [x, u]
@@ -165,7 +159,7 @@ def solve_double_layer_cube() :
 	a1 = 45.0
 	a2 = 11.2
 	dx = 0.05
-	tspan = 10.0
+	tspan = 5.0
 	[x,ib,alp,dt,dxa] = setProperties(nLayers,t1,t2,a1,a2,dx)
 	u = solve_1D_heat_equation(nLayers,x,ib,alp,dt,dxa,tspan,0,0,5,10)
 	return [x, u]
@@ -180,7 +174,7 @@ def solve_double_layer_cube_2() :
 	a1 = 45.0
 	a2 = 11.2
 	dx = 0.05
-	tspan = 10.0
+	tspan = 5.0
 	[x,ib,alp,dt,dxa] = setProperties(nLayers,t1,t2,a1,a2,dx)
 	u = solve_1D_heat_equation(nLayers,x,ib,alp,dt,dxa,tspan,1,1,0,5)
 	return [x, u]
