@@ -16,10 +16,10 @@ from matplotlib import pyplot as plt
 # INPUT:
 #	number of layers
 #	thickness 1, thickness 2, ... , thickness n
-#   alpha 1, alpha 2, ... , alpha 2
+#	alpha 1, alpha 2, ... , alpha 2
 #	delta_x --> minimum spacing (uniform cartesian grid ... 1D here)
-#   delta_x will be modified such that grid points always begin and
-#   on a boundary (dx in one layer may be slightly different than another)
+#	delta_x will be modified such that grid points always begin and
+#	on a boundary (dx in one layer may be slightly different than another)
 def setProperties(nLayers,*args) :
 	# Thickness i args[0,nLayers-1]
 	# Alpha in args[nLayers,2*nLayers-1]
@@ -45,7 +45,10 @@ def setProperties(nLayers,*args) :
 			x = np.concatenate((x[0:-1],xtmp), axis=0)
 			ib[n] = ib[n-1] + ni-1
 		alp[n] = args[nLayers+n]
-
+	# dt derived from CFL condition of minimum grid cell size
+	# and maximum thermal diffusivity. Taking CFL = 0.5 to help
+	# ensure (but not guarantee) stability for an explicitly 
+	# integrated scheme
 	Cmax = 0.5
 	dx2  = dx**2
 	dt   = Cmax*dx2/np.amax(alp)
@@ -73,10 +76,10 @@ def setProperties(nLayers,*args) :
 # For heat flux boundary conditions:
 #	Need to divide Q by (rho*cp) prior to passing argument
 #	to equation solver so that the condition is dimensionally consistent
-#   Recall heat flux [Watt/m^2] --> [M/T^3] 
-#   So you must keep dimensions consistent with how you scale your heat flux
-#   e.g. "cube" dimensions in [m], thermal diffusivity in [m^2/s], 
-#   Heat flux [Watt/m^2], Density in [kg/m^3], Heat capcity [J/(kg*K)], etc ...
+#	Recall heat flux [Watt/m^2] --> [M/T^3] 
+#	So you must keep dimensions consistent with how you scale your heat flux
+#	e.g. "cube" dimensions in [m], thermal diffusivity in [m^2/s], 
+#	Heat flux [Watt/m^2], Density in [kg/m^3], Heat capcity [J/(kg*K)], etc ...
 def solve_1D_heat_equation(nLayers,x,ib,alp,dt,dxa,tspan,*args) :
 	ni = x.size
 	u0 = np.zeros(ni)
