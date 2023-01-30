@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 # and heat flux are enforced. 
 # For an equal spaced grid, the interface point is treated as
 # 
-# u_i = (1+alphaL/alphaR)^{-1} * (u_{i-1} + (alphaR/alphaL)*u_{i+1})
+# u_i = (1+alphaR/alphaL)^{-1} * (u_{i-1} + (alphaR/alphaL)*u_{i+1})
 # 
 # where alphaL == thermal diffusivity of lower material and
 # alphaR == thermal diffusivity of upper material across interface
