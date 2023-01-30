@@ -119,8 +119,9 @@ def solve_1D_heat_equation(nLayers,x,ib,alp,dt,dxa,tspan,*args) :
 			c1 = alp[m]*dt/(dxa[m]**2)
 			istart = ie + 1
 			iend = ib[m]
-			for ii in range(istart,iend,1) :
-				u[ii] = u0[ii] + c1*(u0[ii-1]-2.0*u0[ii]+u0[ii+1])
+	#		for ii in range(istart,iend,1) :
+	#			u[ii] = u0[ii] + c1*(u0[ii-1]-2.0*u0[ii]+u0[ii+1])
+			u[istart:iend] = u0[istart:iend] + c1*(u0[istart-1:iend-1]-2.0*u[istart:iend]+u[istart+1:iend+1])
 			ie = ib[m]
 
 		# Handle interface 
