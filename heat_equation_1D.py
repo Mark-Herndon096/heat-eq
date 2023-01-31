@@ -99,7 +99,7 @@ def solve_1D_heat_equation(nLayers,x,ib,alp,dt,dxa,tspan,ibt1,ibt2,bval1,bval2) 
 		Q2 = bval2*alp[-1]/dxa[-1]
 		w2 = 0.0
 	if ibt1 == 1 :
-		Q1 = bval1
+		Q1 = -bval1
 		w1 = 1.0
 	if ibt2 == 1 :
 		Q2 = bval2
@@ -110,7 +110,7 @@ def solve_1D_heat_equation(nLayers,x,ib,alp,dt,dxa,tspan,ibt1,ibt2,bval1,bval2) 
 	# Primary loop for time series . . .
 	for n in range(nt) :
 		# Appply boundary conditions
-		u[0]  = w1*u[1]  - (dxa[0]/alp[0])*Q1
+		u[0]  = w1*u[1]  + (dxa[0]/alp[0])*Q1
 		u[-1] = w2*u[-2] + (dxa[-1]/alp[-1])*Q2
 		# Redundancy because ...
 		u0[0]  = u[0]
