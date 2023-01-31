@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import numpy as np
 from matplotlib import pyplot as plt
+from numba import njit, int64, float64, types, int32
+import time
 
 
 # Interfaces between layers are treated as perfect interfaces
@@ -29,7 +31,7 @@ def setProperties(nLayers,*args) :
 	# dx in args[2*nLayers]
 	xspan = 0.0
 	dx = args[2*nLayers]
-	ib = np.zeros(nLayers,dtype=int)
+	ib = np.zeros(nLayers,dtype=np.int32)
 	alp = np.zeros(nLayers)
 	dxa = np.zeros(nLayers)
 	for n in range(nLayers) :
@@ -56,7 +58,6 @@ def setProperties(nLayers,*args) :
 	Cmax = 0.5
 	dx2  = dx**2
 	dt   = Cmax*dx2/np.amax(alp)
-		
 	return [x, ib, alp, dt, dxa]
 	
 # Solve 1D heat equation via Forward Euler (explicit time integration)
@@ -84,23 +85,24 @@ def setProperties(nLayers,*args) :
 #	So you must keep dimensions consistent with how you scale your heat flux
 #	e.g. "cube" dimensions in [m], thermal diffusivity in [m^2/s], 
 #	Heat flux [Watt/m^2], Density in [kg/m^3], Heat capcity [J/(kg*K)], etc ...
-def solve_1D_heat_equation(nLayers,x,ib,alp,dt,dxa,tspan,*args) :
+@njit(float64[:](int64,float64[:],int32[:],float64[:],float64,float64[:],float64,int64,int64,float64,float64))
+def solve_1D_heat_equation(nLayers,x,ib,alp,dt,dxa,tspan,ibt1,ibt2,bval1,bval2) :
 	ni = x.size
-	u0 = np.zeros(ni)
+	u0 = np.ones(ni)
 	u  = np.zeros(ni)
-	if args[0] == 0 :
-		u0[0] = args[2]
-		Q1 = args[2]*alp[0]/dxa[0]
+	if ibt1 == 0 :
+		u0[0] = bval1
+		Q1 = bval1*alp[0]/dxa[0]
 		w1 = 0.0
-	if args[1] == 0 :
-		u0[-1] = args[3]
-		Q2 = args[3]*alp[-1]/dxa[-1]
+	if ibt2 == 0 :
+		u0[-1] = bval2
+		Q2 = bval2*alp[-1]/dxa[-1]
 		w2 = 0.0
-	if args[0] == 1 :
-		Q1 = args[2]
+	if ibt1 == 1 :
+		Q1 = bval1
 		w1 = 1.0
-	if args[1] == 1 :
-		Q2 = args[3]
+	if ibt2 == 1 :
+		Q2 = bval2
 		w2 = 1.0
 	u = u0
 	# Neumann BC handled in routine
@@ -108,7 +110,7 @@ def solve_1D_heat_equation(nLayers,x,ib,alp,dt,dxa,tspan,*args) :
 	# Primary loop for time series . . .
 	for n in range(nt) :
 		# Appply boundary conditions
-		u[0]  = w1*u[1]  + (dxa[0]/alp[0])*Q1
+		u[0]  = w1*u[1]  - (dxa[0]/alp[0])*Q1
 		u[-1] = w2*u[-2] + (dxa[-1]/alp[-1])*Q2
 		# Redundancy because ...
 		u0[0]  = u[0]
@@ -147,7 +149,7 @@ def solve_single_layer_cube() :
 	dx = 0.05
 	tspan = 5.0
 	[x,ib,alp,dt,dxa] = setProperties(nLayers,t1,a1,dx)
-	u = solve_1D_heat_equation(nLayers,x,ib,alp,dt,dxa,tspan,0,0,5,10)
+	u = solve_1D_heat_equation(nLayers,x,ib,alp,dt,dxa,tspan,0,0,5.0,10.0)
 	return [x, u]
 # Solve "cube" with two layers (two materials)
 # With Dirichlet boundary conditions
@@ -162,7 +164,7 @@ def solve_double_layer_cube() :
 	dx = 0.05
 	tspan = 5.0
 	[x,ib,alp,dt,dxa] = setProperties(nLayers,t1,t2,a1,a2,dx)
-	u = solve_1D_heat_equation(nLayers,x,ib,alp,dt,dxa,tspan,0,0,5,10)
+	u = solve_1D_heat_equation(nLayers,x,ib,alp,dt,dxa,tspan,0,0,5.0,10.0)
 	return [x, u]
 
 # Solve "cube" with two layers (two materials)
@@ -177,17 +179,23 @@ def solve_double_layer_cube_2() :
 	dx = 0.05
 	tspan = 5.0
 	[x,ib,alp,dt,dxa] = setProperties(nLayers,t1,t2,a1,a2,dx)
-	u = solve_1D_heat_equation(nLayers,x,ib,alp,dt,dxa,tspan,1,1,0,5)
+	u = solve_1D_heat_equation(nLayers,x,ib,alp,dt,dxa,tspan,1,1,0.0,5.0)
 	return [x, u]
 ## MAIN CODE FOR EXAMPLES
 def main() :
+	tic = time.time()
 	[x1, u1] = solve_single_layer_cube()
+	toc = time.time()
 	[x2, u2] = solve_double_layer_cube()
+	toc = time.time()
 	[x3, u3] = solve_double_layer_cube_2()
+	toc = time.time()
+	print("Elapsed time = ", toc-tic, "seconds")
 	
 	# Plot 3 examples on subplot
 	plt.figure()
 	plt.subplot(1,3,1)
+	plt.style.use('seaborn-deep')
 	plt.plot(x1,u1,"k-")
 	plt.xlim((0, 10))
 	plt.xlabel("x (length)")
@@ -196,6 +204,7 @@ def main() :
 	plt.title("Dirichlet conditions (1 Layer)")
 	
 	plt.subplot(1,3,2)
+	plt.style.use('seaborn-deep')
 	plt.plot(x2,u2,"k-")
 	plt.xlim((0, 10))
 	plt.xlabel("x (length)")
@@ -204,6 +213,7 @@ def main() :
 	plt.title("Dirichlet conditions (2 Layer)")
 	
 	plt.subplot(1,3,3)
+	plt.style.use('seaborn-deep')
 	plt.plot(x3,u3,"k-")
 	plt.xlim((0, 10))
 	plt.xlabel("x (length)")
