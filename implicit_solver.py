@@ -63,11 +63,14 @@ def backward_Euler_solver(nLayers,x,ib,alp,dt,dxa,tspan,ibt1,ibt2,bval1,bval2) :
 		c[0] = -1
 	if ibt2 == 1 :
 		a[-1] = -1
+	# Appply boundary conditions
+	u0[0]  = w1*u[1]  + (dxa[0]/alp[0])*Q1
+	u0[-1] = w2*u[-2] + (dxa[-1]/alp[-1])*Q2
 	# Primary loop for time series . . .
 	for n in range(nt) :
 		# Appply boundary conditions
-		u0[0]  = w1*u[1]  + (dxa[0]/alp[0])*Q1
-		u0[-1] = w2*u[-2] + (dxa[-1]/alp[-1])*Q2
+	#	u0[0]  = w1*u[1]  + (dxa[0]/alp[0])*Q1
+	#	u0[-1] = w2*u[-2] + (dxa[-1]/alp[-1])*Q2
 		# Handle interface (from t = t-\Delta t)
 		for m in range(nLayers-1) :
 			ind = ib[m]
@@ -120,7 +123,7 @@ def setProperties(nLayers,*args) :
 def solve_single_layer_cubei() :
 	nLayers = 1
 	t1 = 10.0
-	a1 = 14.2
+	a1 = 12.0
 	dx = 0.05
 	tspan = 5.0
 	[x,ib,alp,dt,dxa] = setProperties(nLayers,t1,a1,dx,25)
@@ -137,7 +140,7 @@ def solve_double_layer_cubei() :
 	a1 = 45.0
 	a2 = 11.2
 	dx = 0.05
-	tspan = 5.0
+	tspan = 2.0
 	[x,ib,alp,dt,dxa] = setProperties(nLayers,t1,t2,a1,a2,dx,25)
 	u = backward_Euler_solver(nLayers,x,ib,alp,dt,dxa,tspan,0,0,5.0,10.0)
 	return [x, u]
